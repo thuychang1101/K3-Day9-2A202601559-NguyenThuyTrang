@@ -1,0 +1,33 @@
+{
+  "model": {
+    "model_provider": "openai",
+    "model_name": "gpt-realtime-2.1-mini",
+    "model_parameter_size_b": null,
+    "model_endpoint": "https://openrouter.ai/api/v1",
+    "model_site_url": null,
+    "model_app_name": "olist-dispute-resolution",
+    "model_timeout_seconds": 30.0,
+    "model_audit_enabled": true,
+    "strict_model_audit": false,
+    "max_workers": 3,
+    "runtime": "python-3.13"
+  },
+  "framework": "stdlib supervisor-specialist-verifier workflow",
+  "runtime": "python-3.13",
+  "policy_version": "EC_POLICY_V1",
+  "agents": [
+    "coordinator",
+    "order_seller",
+    "payment",
+    "delivery",
+    "policy",
+    "verifier"
+  ],
+  "dataset_summary": {
+    "orders": 99441,
+    "order_item_orders": 98666,
+    "payment_orders": 99440,
+    "sellers": 3095
+  },
+  "latest_run_case_count": 50
+}

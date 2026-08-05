@@ -1,0 +1,10 @@
+{
+  "case_id": "EC_035",
+  "opened_at": "2018-10-18T00:00:00-03:00",
+  "customer_request": {
+    "language": "vi",
+    "message": "Tôi cho rằng đơn hàng được giao trễ. Hãy kiểm tra nguyên nhân và quyền lợi phù hợp.",
+    "claimed_order_id": "2478ddd1d1395639b71cf0d498d8dbf6"
+  },
+  "policy_version": "EC_POLICY_V1"
+}

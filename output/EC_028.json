@@ -1,0 +1,47 @@
+{
+  "case_id": "EC_028",
+  "assessment": {
+    "primary_issue": "unavailable_order_paid",
+    "case_status": "action_required",
+    "confidence": 0.95
+  },
+  "affected_entities": {
+    "order_ids": [
+      "80f0181edc2f4a5bd3384a3c39a83cee"
+    ],
+    "item_ids": [],
+    "seller_ids": [],
+    "payment_ids": [
+      "80f0181edc2f4a5bd3384a3c39a83cee:1"
+    ]
+  },
+  "root_cause_analysis": {
+    "ranked_causes": [
+      {
+        "cause_code": "ORDER_UNAVAILABLE_AFTER_PAYMENT",
+        "rank": 1
+      }
+    ],
+    "responsible_parties": [
+      {
+        "party_type": "platform",
+        "party_id": "OLIST_PLATFORM"
+      }
+    ]
+  },
+  "evidence_ids": [
+    "order:80f0181edc2f4a5bd3384a3c39a83cee",
+    "policy:ORDER_UNAVAILABLE_AFTER_PAYMENT",
+    "payment:80f0181edc2f4a5bd3384a3c39a83cee:1"
+  ],
+  "financial_resolution": {
+    "currency": "BRL",
+    "item_total_brl": 0.0,
+    "freight_total_brl": 0.0,
+    "payment_total_brl": 61.19,
+    "recommended_refund_brl": 61.19
+  },
+  "resolution_actions": [
+    "issue_full_refund"
+  ]
+}

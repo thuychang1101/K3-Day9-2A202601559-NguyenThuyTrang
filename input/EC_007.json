@@ -1,0 +1,10 @@
+{
+  "case_id": "EC_007",
+  "opened_at": "2018-10-18T00:00:00-03:00",
+  "customer_request": {
+    "language": "vi",
+    "message": "Đơn hàng không được hoàn tất dù tôi đã thanh toán. Hãy kiểm tra và đề xuất xử lý.",
+    "claimed_order_id": "ded456690bcb2ffd4def86541479037f"
+  },
+  "policy_version": "EC_POLICY_V1"
+}
