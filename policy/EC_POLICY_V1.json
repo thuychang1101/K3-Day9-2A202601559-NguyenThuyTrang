@@ -1,0 +1,77 @@
+{
+  "policy_version": "EC_POLICY_V1",
+  "currency": "BRL",
+  "reconciliation_tolerance_brl": 0.10,
+  "confidence_profiles": {
+    "direct_status_payment": {"default": 0.95},
+    "delivery_timestamps": {"default": 0.97},
+    "reconciled_payment": {"exact": 0.98, "within_tolerance": 0.92}
+  },
+  "output_limits": {
+    "entity_ids": 5,
+    "evidence_ids": 10,
+    "ranked_causes": 3,
+    "responsible_parties": 3,
+    "resolution_actions": 5
+  },
+  "rules": [
+    {
+      "primary_issue": "canceled_order_paid",
+      "match_key": "canceled_order_paid",
+      "cause_code": "ORDER_CANCELED_AFTER_PAYMENT",
+      "action": "issue_full_refund",
+      "refund_basis": "payment_total",
+      "evidence_sources": ["order", "payment", "policy"],
+      "responsible_party": {"party_type": "platform", "party_id": "OLIST_PLATFORM"},
+      "confidence_profile": "direct_status_payment"
+    },
+    {
+      "primary_issue": "unavailable_order_paid",
+      "match_key": "unavailable_order_paid",
+      "cause_code": "ORDER_UNAVAILABLE_AFTER_PAYMENT",
+      "action": "issue_full_refund",
+      "refund_basis": "payment_total",
+      "evidence_sources": ["order", "payment", "policy"],
+      "responsible_party": {"party_type": "platform", "party_id": "OLIST_PLATFORM"},
+      "confidence_profile": "direct_status_payment"
+    },
+    {
+      "primary_issue": "late_delivery_seller",
+      "match_key": "late_delivery_seller",
+      "cause_code": "SELLER_HANDOFF_AFTER_LIMIT",
+      "action": "refund_freight",
+      "refund_basis": "freight_total",
+      "evidence_sources": ["order", "item", "payment", "seller", "policy"],
+      "responsible_party": {"party_type": "seller"},
+      "confidence_profile": "delivery_timestamps"
+    },
+    {
+      "primary_issue": "late_delivery_logistics",
+      "match_key": "late_delivery_logistics",
+      "cause_code": "CARRIER_DELIVERED_AFTER_ESTIMATE",
+      "action": "refund_freight",
+      "refund_basis": "freight_total",
+      "evidence_sources": ["order", "item", "payment", "policy"],
+      "responsible_party": {"party_type": "logistics_provider", "party_id": "LOGISTICS_PROVIDER"},
+      "confidence_profile": "delivery_timestamps"
+    },
+    {
+      "primary_issue": "valid_split_payment",
+      "match_key": "valid_split_payment",
+      "cause_code": "MULTIPLE_PAYMENTS_RECONCILED",
+      "action": "explain_valid_split_payment",
+      "refund_basis": "none",
+      "evidence_sources": ["order", "item", "payment", "policy"],
+      "confidence_profile": "reconciled_payment"
+    },
+    {
+      "primary_issue": "unsupported_late_claim",
+      "match_key": "unsupported_late_claim",
+      "cause_code": "DELIVERY_WITHIN_ESTIMATE",
+      "action": "reject_late_refund",
+      "refund_basis": "none",
+      "evidence_sources": ["order", "item", "payment", "policy"],
+      "confidence_profile": "reconciled_payment"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "assessment": {
     "primary_issue": "valid_split_payment",
     "case_status": "no_action",
-    "confidence": 0.95
+    "confidence": 0.98
   },
   "affected_entities": {
     "order_ids": [
@@ -16,8 +16,8 @@
       "cc419e0650a3c5ba77189a1882b7556a"
     ],
     "payment_ids": [
-      "b93b079468bdf6a20fd54cf45d1e03b6:2",
-      "b93b079468bdf6a20fd54cf45d1e03b6:1"
+      "b93b079468bdf6a20fd54cf45d1e03b6:1",
+      "b93b079468bdf6a20fd54cf45d1e03b6:2"
     ]
   },
   "root_cause_analysis": {
@@ -31,11 +31,10 @@
   },
   "evidence_ids": [
     "order:b93b079468bdf6a20fd54cf45d1e03b6",
-    "policy:MULTIPLE_PAYMENTS_RECONCILED",
     "item:b93b079468bdf6a20fd54cf45d1e03b6:1",
-    "payment:b93b079468bdf6a20fd54cf45d1e03b6:2",
     "payment:b93b079468bdf6a20fd54cf45d1e03b6:1",
-    "seller:cc419e0650a3c5ba77189a1882b7556a"
+    "payment:b93b079468bdf6a20fd54cf45d1e03b6:2",
+    "policy:MULTIPLE_PAYMENTS_RECONCILED"
   ],
   "financial_resolution": {
     "currency": "BRL",

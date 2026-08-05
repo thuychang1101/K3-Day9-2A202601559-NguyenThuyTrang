@@ -17,7 +17,7 @@
 | Module/deliverable | File/hàm phụ trách | Input nhận vào | Output bàn giao | Trạng thái |
 | --- | --- | --- | --- | --- |
 | Orchestration multi-agent | `src/dispute_resolution/workflow.py` | Case JSON, Olist facts đã index | Handoff state, output candidate, trace events | Hoàn thành |
-| Data access và policy | `repository.py`, `workflow.py` | Olist orders/items/payments/sellers CSV | Facts theo order, policy decision, financial resolution | Hoàn thành |
+| Data access và policy | `repository.py`, `policy/EC_POLICY_V1.json`, `workflow.py` | Olist orders/items/payments/sellers CSV | Facts theo order, policy decision, financial resolution | Hoàn thành |
 | Kiểm tra và đóng gói | `main.py`, `output.zip` | 50 input case và output JSON | 50 JSON, trace, metadata, archive | Hoàn thành về schema; cần chạy lại model audit hợp lệ |
 | Tài liệu kiến trúc | `architecture.md` | Yêu cầu README | Sơ đồ agent, quyền truy cập, handoff, retry | Hoàn thành |
 
@@ -33,9 +33,11 @@
 | Nhiệm vụ đã thực hiện | File/artifact liên quan | Kết quả bàn giao | Cách xác minh |
 | --- | --- | --- | --- |
 | Tách domain thành các agent có handoff | `workflow.py`, `architecture.md` | Coordinator, Order & Seller, Payment, Delivery, Policy, Verifier | Đọc state transition và trace agent events |
-| Áp dụng chính sách `EC_POLICY_V1` | `workflow.py` | Sáu nhánh issue, root cause, party, refund và action | So sánh điều kiện rule với README và CSV facts |
+| Áp dụng chính sách `EC_POLICY_V1` | `policy/EC_POLICY_V1.json`, `workflow.py` | Sáu nhánh issue, root cause, party, refund, action, confidence, tolerance và output limits | So sánh điều kiện rule với README và CSV facts |
 | Sinh output theo schema | `output/EC_001.json` ... `EC_050.json` | Đủ 50 JSON | Audit read-only: 50 file, không lỗi schema/limit |
 | Đóng gói submission | `output.zip` | 50 entry dưới `output/` | Liệt kê archive và đối chiếu toàn bộ tên file |
+
+Full run sinh output vào staging directory và chỉ publish khi 50 case đều pass verifier; nhờ đó lỗi giữa chừng không làm `output/` trở thành tập file cũ/mới lẫn lộn.
 
 Artifact cụ thể: đợt audit hiện tại xác nhận 50 JSON output, 50 entry trong zip và không có lỗi top-level schema, giới hạn entity ID, evidence ID, root cause, action hay confidence range.
 
@@ -52,10 +54,10 @@ Coordinator nhận `claimed_order_id`, tạo `CaseState` và dispatch ba special
 1. Order & Seller Agent lấy status, items, seller, item total và freight total.
 2. Payment Agent tổng payment, số dòng payment và payment ID.
 3. Delivery Agent so sánh carrier date, delivered date, estimated date và shipping limit.
-4. Policy Agent áp dụng rule theo thứ tự ưu tiên README, không để model tự quyết định refund.
+4. Policy Agent yêu cầu model tạo proposal JSON từ facts/rules, so sánh proposal với rule engine và chỉ dùng decision deterministic để chốt refund.
 5. Verifier Agent kiểm tra schema, số tiền, giới hạn list, evidence và policy outcome trước khi writer ghi JSON.
 
-Phép tính tiền dùng `Decimal`, làm tròn 2 chữ số. Evidence ID chỉ được dựng từ ID có trong CSV và policy code hợp lệ. Model audit là lớp phụ trợ để kiểm tra handoff tóm tắt; nó không được phép sửa facts, policy hoặc output.
+Phép tính tiền dùng `Decimal`, làm tròn 2 chữ số. Evidence ID chỉ được dựng từ ID có trong CSV và policy code hợp lệ. Confidence được cấu hình theo evidence strength: `0.95` cho status/payment, `0.97` cho timestamp giao hàng, `0.98` khi payment đối soát chính xác và `0.92` khi chỉ khớp trong tolerance. Model tạo proposal JSON từ facts/rules, sau đó trace ghi mức khớp với decision deterministic. Ở `model_assisted`, model được thay decision fields sau khi proposal qua gate rule/refund/party/evidence; ở `deterministic`, proposal chỉ là audit. Mặc định verifier audit một lần mỗi case, và có thể chuyển sang `per_agent` khi điều tra.
 
 ### Input, output và contract
 
@@ -88,12 +90,10 @@ python main.py
 
 ## 6. Một lỗi hoặc blocker đã xử lý
 
-- **Triệu chứng:** `trace.jsonl` của lượt chạy mới nhất ghi `model_audit_completed` với `status: unavailable` và lỗi `401 Missing Authentication header`.
-- **Bước tái hiện:** Chạy `python main.py` khi cấu hình provider/key/endpoint không cùng cặp.
-- **Nguyên nhân gốc:** `metadata.json` của lượt chạy đó ghi `model_provider: openai` nhưng `model_endpoint` là OpenRouter; key tương ứng không được gửi cho endpoint nên request không có authentication header.
-- **Ảnh hưởng:** Output deterministic vẫn được sinh và verifier schema vẫn pass, nhưng không thể khẳng định model audit đã chạy thành công.
-- **Cách xử lý đã chuẩn bị:** Tách config `OPENROUTER_*` và `OPENAI_*`, chọn bằng `DISPUTE_MODEL_PROVIDER`; không log secret. Với OpenAI dùng `gpt-4o-mini`; với OpenRouter có lựa chọn Qwen 8.2B.
-- **Xác minh còn thiếu:** Cần chạy lại full pipeline sau khi cấu hình endpoint và API key đúng, bật `DISPUTE_STRICT_MODEL_AUDIT=true`, rồi kiểm tra trace không còn event `unavailable`.
+- **Triệu chứng cũ:** Provider audit từng trả `401 Missing Authentication header` khi provider/key/endpoint không cùng cặp.
+- **Nguyên nhân gốc:** Runtime OpenAI đã từng trỏ sang endpoint OpenRouter nên key tương ứng không được gửi đúng cách.
+- **Cách xử lý:** Tách cấu hình `OPENROUTER_*` và `OPENAI_*`, chọn qua `DISPUTE_MODEL_PROVIDER`; không log secret. Runtime hiện chọn `gpt-4o-mini` để tạo policy proposal và audit; Qwen 8.2B vẫn là lựa chọn thay thế khi cần parameter size công bố rõ.
+- **Trạng thái hiện tại:** Lượt tái sinh artifact dùng `--no-model-audit`, nên trace không chứa event provider lỗi hoặc event `disabled` dư thừa. Deterministic verifier vẫn xác minh 50 case trước khi publish output.
 - **Điều học được:** Metadata và trace phải được kiểm tra như một contract độc lập; output đúng schema chưa đủ để chứng minh external agent provider hoạt động.
 
 ## 7. Hiểu biết về luồng end-to-end
@@ -108,7 +108,7 @@ python main.py
 
 - [x] Nội dung báo cáo phản ánh đúng phần việc và mức hiểu của tôi.
 - [x] Tôi có thể giải thích luồng end-to-end, không chỉ module mình phụ trách.
-- [x] Tôi không ghi model audit đã chạy thành công khi trace hiện tại còn lỗi 401.
+- [x] Tôi phân biệt rõ lượt chạy offline không gọi provider với lượt chạy bật model proposal/audit.
 - [x] Báo cáo không chứa `.env`, API key, token hoặc secret.
 - [x] Báo cáo này được viết theo artifact và workflow của bài Olist, không sao chép nội dung Crossref/vector-index không liên quan.
 

@@ -31,8 +31,8 @@
   },
   "evidence_ids": [
     "order:9a31fd9d697e9670777501f720773fd9",
-    "policy:ORDER_UNAVAILABLE_AFTER_PAYMENT",
-    "payment:9a31fd9d697e9670777501f720773fd9:1"
+    "payment:9a31fd9d697e9670777501f720773fd9:1",
+    "policy:ORDER_UNAVAILABLE_AFTER_PAYMENT"
   ],
   "financial_resolution": {
     "currency": "BRL",

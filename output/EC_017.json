@@ -3,7 +3,7 @@
   "assessment": {
     "primary_issue": "late_delivery_logistics",
     "case_status": "action_required",
-    "confidence": 0.95
+    "confidence": 0.97
   },
   "affected_entities": {
     "order_ids": [
@@ -35,10 +35,9 @@
   },
   "evidence_ids": [
     "order:dd6ee4d96f0f3cf1432c3b82818e0387",
-    "policy:CARRIER_DELIVERED_AFTER_ESTIMATE",
     "item:dd6ee4d96f0f3cf1432c3b82818e0387:1",
     "payment:dd6ee4d96f0f3cf1432c3b82818e0387:1",
-    "seller:1dfe5347016252a7884b694d4f10f5c4"
+    "policy:CARRIER_DELIVERED_AFTER_ESTIMATE"
   ],
   "financial_resolution": {
     "currency": "BRL",

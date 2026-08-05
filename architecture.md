@@ -124,12 +124,17 @@ Coordinator không tính refund và không tự thay đổi kết quả policy.
 - Dựng output candidate, chỉ tham chiếu evidence do specialist agent cung cấp
   cộng thêm `policy:<root_cause_code>`.
 
-Policy rule được cài bằng code/rule table versioned, không dựa vào diễn giải tự
-do của model. Mỗi agent gọi provider được chọn để audit handoff tóm tắt, phát
-hiện fact cần xem lại và ghi trace. Mặc định là `qwen/qwen3-8b` (8.2B) qua
-OpenRouter; tùy chọn khác là `gpt-4o-mini` qua OpenAI Responses API. Kết luận
-cuối vẫn phải đi qua rule engine, do đó model không thể làm thay đổi số tiền,
-evidence ID hoặc policy outcome.
+Policy được nạp từ `policy/EC_POLICY_V1.json`. File này giữ version, thứ tự ưu
+tiên của rule, confidence, tolerance đối soát và giới hạn output; code chỉ thực
+thi và kiểm tra cấu hình này, không dựa vào diễn giải tự do của model.
+`Policy Agent` gọi provider một lần để tạo proposal JSON độc lập từ facts và
+rule; trace so sánh từng field proposal với decision deterministic. Mặc định,
+`Verifier Agent` gọi provider để audit kết quả cuối; đặt
+`DISPUTE_MODEL_AUDIT_SCOPE=per_agent` khi cần audit từng handoff để điều tra.
+Mặc định source chọn `qwen/qwen3-8b` (8.2B) qua OpenRouter; có thể chọn
+`gpt-4o-mini` qua OpenAI Responses API. `DISPUTE_MODEL_OUTPUT_MODE=deterministic`
+giữ decision chuẩn; `model_assisted` cho phép model thay đổi decision fields
+chỉ khi proposal qua gate rule/refund/party/evidence trước khi Verifier kiểm tra.
 
 ### Verifier Agent
 
@@ -166,9 +171,19 @@ không được đưa vào trace hay output.
 mapping trực tiếp từ facts sang policy outcome, do đó confidence nên được gán
 theo chất lượng dữ liệu chứ không phải mức độ đoán của model:
 
-- `0.95`: đủ order, item/payment cần thiết và timestamp/rule kết luận rõ ràng.
-- `0.85`: kết luận hợp lệ nhưng thiếu dữ liệu phụ không ảnh hưởng rule.
+- `0.95`: rule xác nhận trực tiếp từ order status và payment dương.
+- `0.97`: rule giao hàng có đầy đủ delivered, estimated, carrier và shipping
+  limit timestamps để phân định seller hoặc logistics.
+- `0.98`: split payment hoặc claim giao trễ không được hỗ trợ khi payment đối
+  soát chính xác (`delta = 0`).
+- `0.92`: các rule đối soát vẫn hợp lệ nhưng chỉ khớp trong tolerance `0.10 BRL`.
 - Không ghi output khi thiếu dữ liệu bắt buộc hoặc verifier không thể xác thực.
+
+Các mức này nằm trong `confidence_profiles` của `policy/EC_POLICY_V1.json`.
+`Verifier Agent` dùng hàm đánh giá policy thuần để tái tạo expected output; nó
+không gọi lại model audit. Model proposal là lớp so sánh độc lập, không có
+quyền ghi đè ở mode `deterministic`; ở mode `model_assisted`, chỉ proposal hợp
+lệ qua gate mới được áp dụng và trace phải ghi event `model_proposal_applied`.
 
 Mọi monetary field sử dụng BRL và round half-up/round theo quy ước thống nhất
 đến 2 chữ số thập phân trước khi so sánh hoặc ghi output. Payment reconciliation
@@ -178,10 +193,15 @@ cho phép sai số tối đa `0.10 BRL` như README.
 
 - CSV được load read-only và index theo `order_id` khi khởi động runtime để các
   case dùng cùng một nguồn facts.
+- Full run ghi trước vào staging directory; chỉ khi đủ 50 case pass verifier thì
+  các file mới được publish vào `output/` và nén zip. Một lượt chạy lỗi không
+  thể trộn output cũ với output mới.
 - Mỗi lần chạy mới tạo lại `trace.jsonl`, không append trace cũ.
 - Mỗi event trace cần có timestamp, `case_id`, agent, input/output handoff
   summary, evidence IDs và validation result; không log secret hoặc toàn bộ
   customer message khi không cần thiết.
+- `DISPUTE_MODEL_AUDIT_SCOPE=final_only` giới hạn provider audit còn một lần ở
+  verifier mỗi case. `per_agent` chỉ dùng khi cần điều tra handoff chi tiết.
 - `metadata.json` khai báo provider/model đang chọn, parameter size khi provider
   công bố, framework, runtime và policy version. `qwen/qwen3-8b` là lựa chọn
   đáp ứng giới hạn 10B; OpenAI không công bố parameter size cho `gpt-4o-mini`,
@@ -191,7 +211,4 @@ cho phép sai số tối đa `0.10 BRL` như README.
 
 ## 8. Lý do chọn pattern
 
-Pattern này đáp ứng yêu cầu có phân công, handoff và verification thực sự, đồng
-thời tránh dùng swarm/debate cho bài toán có dữ liệu và rule xác định. Supervisor
-giữ luồng xử lý rõ ràng; specialist worker giảm phạm vi mỗi agent; verifier tạo
-một quality gate độc lập trước khi sinh 50 file nộp bài.
+Pattern này đáp ứng yêu cầu có phân công, handoff và verification thực sự, đồng thời tránh dùng swarm/debate cho bài toán có dữ liệu và rule xác định. Supervisor giữ luồng xử lý rõ ràng; specialist worker giảm phạm vi mỗi agent; verifier tạo một quality gate độc lập trước khi sinh 50 file nộp bài.

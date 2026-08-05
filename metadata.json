@@ -1,13 +1,16 @@
 {
   "model": {
     "model_provider": "openai",
-    "model_name": "gpt-realtime-2.1-mini",
+    "model_name": "gpt-4o-mini",
     "model_parameter_size_b": null,
-    "model_endpoint": "https://openrouter.ai/api/v1",
+    "model_endpoint": "https://api.openai.com/v1",
     "model_site_url": null,
     "model_app_name": "olist-dispute-resolution",
     "model_timeout_seconds": 30.0,
     "model_audit_enabled": true,
+    "model_proposal_enabled": true,
+    "model_output_mode": "model_assisted",
+    "model_audit_scope": "final_only",
     "strict_model_audit": false,
     "max_workers": 3,
     "runtime": "python-3.13"

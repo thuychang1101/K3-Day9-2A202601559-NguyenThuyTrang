@@ -29,7 +29,9 @@ def load_dotenv(path: Path) -> None:
         key = key.strip()
         value = value.strip().strip('"').strip("'")
         if key:
-            os.environ.setdefault(key, value)
+            # Project configuration must be reproducible even when a terminal
+            # inherits stale provider variables from another project.
+            os.environ[key] = value
 
 
 @dataclass(frozen=True)
@@ -43,6 +45,9 @@ class RuntimeConfig:
     model_app_name: str
     model_timeout_seconds: float
     model_audit_enabled: bool
+    model_proposal_enabled: bool
+    model_output_mode: str
+    model_audit_scope: str
     strict_model_audit: bool
     max_workers: int
     runtime: str
@@ -92,7 +97,16 @@ class RuntimeConfig:
         except ValueError as error:
             raise ValueError(f"{timeout_setting} must be numeric.") from error
         if timeout_seconds <= 0:
-            raise ValueError("OPENROUTER_TIMEOUT_SECONDS must be greater than 0.")
+            raise ValueError(f"{timeout_setting} must be greater than 0.")
+
+        audit_scope = os.getenv("DISPUTE_MODEL_AUDIT_SCOPE", "final_only").lower()
+        if audit_scope not in {"final_only", "per_agent"}:
+            raise ValueError("DISPUTE_MODEL_AUDIT_SCOPE must be 'final_only' or 'per_agent'.")
+        output_mode = os.getenv("DISPUTE_MODEL_OUTPUT_MODE", "deterministic").lower()
+        if output_mode not in {"deterministic", "model_assisted"}:
+            raise ValueError(
+                "DISPUTE_MODEL_OUTPUT_MODE must be 'deterministic' or 'model_assisted'."
+            )
 
         return cls(
             model_provider=provider,
@@ -104,6 +118,10 @@ class RuntimeConfig:
             model_app_name=model_app_name,
             model_timeout_seconds=timeout_seconds,
             model_audit_enabled=os.getenv("DISPUTE_ENABLE_MODEL_AUDIT", "true").lower() == "true",
+            model_proposal_enabled=os.getenv("DISPUTE_ENABLE_MODEL_PROPOSAL", "true").lower()
+            == "true",
+            model_output_mode=output_mode,
+            model_audit_scope=audit_scope,
             strict_model_audit=os.getenv("DISPUTE_STRICT_MODEL_AUDIT", "false").lower() == "true",
             max_workers=max_workers,
             runtime=os.getenv("DISPUTE_RUNTIME", "python"),

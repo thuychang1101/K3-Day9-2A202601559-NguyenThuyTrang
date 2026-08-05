@@ -3,7 +3,7 @@
   "assessment": {
     "primary_issue": "unsupported_late_claim",
     "case_status": "no_action",
-    "confidence": 0.95
+    "confidence": 0.98
   },
   "affected_entities": {
     "order_ids": [
@@ -30,10 +30,9 @@
   },
   "evidence_ids": [
     "order:b04477ada8d2ad7fa9d95358baaa785d",
-    "policy:DELIVERY_WITHIN_ESTIMATE",
     "item:b04477ada8d2ad7fa9d95358baaa785d:1",
     "payment:b04477ada8d2ad7fa9d95358baaa785d:1",
-    "seller:b4ffb71f0cb1b1c3d63fad021ecf93e1"
+    "policy:DELIVERY_WITHIN_ESTIMATE"
   ],
   "financial_resolution": {
     "currency": "BRL",

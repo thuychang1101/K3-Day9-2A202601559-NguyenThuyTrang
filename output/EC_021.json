@@ -35,10 +35,8 @@
   },
   "evidence_ids": [
     "order:13d341318c77969f10d77e1382957542",
-    "policy:ORDER_CANCELED_AFTER_PAYMENT",
-    "item:13d341318c77969f10d77e1382957542:1",
     "payment:13d341318c77969f10d77e1382957542:1",
-    "seller:2e1a7d075abe038c1b2743005fe42ff1"
+    "policy:ORDER_CANCELED_AFTER_PAYMENT"
   ],
   "financial_resolution": {
     "currency": "BRL",
